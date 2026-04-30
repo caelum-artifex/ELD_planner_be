@@ -8,8 +8,13 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key")
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
-# ── Apps (API ONLY) ────────────────────────────────────────
+# ── Apps ──────────────────────────────────────────────────
+# contenttypes + auth must be present so DRF can import their models at
+# startup — even though we never touch the DB at runtime.
+# admin / sessions / messages are not needed.
 INSTALLED_APPS = [
+    "django.contrib.contenttypes",
+    "django.contrib.auth",
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
