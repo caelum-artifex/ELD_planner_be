@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .hos import build_trip_schedule
-from .services import geocode_location, route_between_points
+from .services import MapServiceError, geocode_location, route_between_points
 
 
 class PlanTripInputSerializer(serializers.Serializer):
@@ -13,6 +13,12 @@ class PlanTripInputSerializer(serializers.Serializer):
     pickup_location = serializers.CharField()
     dropoff_location = serializers.CharField()
     current_cycle_used_hours = serializers.FloatField(min_value=0, max_value=70)
+    prior_8_day_on_duty_hours = serializers.ListField(
+        child=serializers.FloatField(min_value=0),
+        required=False,
+        min_length=8,
+        max_length=8,
+    )
 
     def validate(self, attrs):
         locations = {
@@ -57,7 +63,7 @@ class PlanTripView(APIView):
 
             leg_1 = route_between_points(current_point, pickup_point)
             leg_2 = route_between_points(pickup_point, dropoff_point)
-        except Exception as exc:
+        except MapServiceError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         leg_1_miles = leg_1["distance_meters"] * 0.000621371
@@ -70,6 +76,7 @@ class PlanTripView(APIView):
             current_location=current_point["label"],
             pickup_location=pickup_point["label"],
             dropoff_location=dropoff_point["label"],
+            prior_8_day_on_duty_hours=payload.get("prior_8_day_on_duty_hours"),
         )
 
         route_geo = [[coord[1], coord[0]] for coord in leg_1["geometry"] + leg_2["geometry"]]

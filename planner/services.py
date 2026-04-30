@@ -7,20 +7,27 @@ import requests
 USER_AGENT = "truck-planner-assessment/1.0"
 
 
+class MapServiceError(Exception):
+    pass
+
+
 def geocode_location(query: str) -> dict[str, Any]:
     clean_query = query.strip()
     if not clean_query:
-        raise ValueError("Location value cannot be empty.")
-    response = requests.get(
-        "https://nominatim.openstreetmap.org/search",
-        params={"q": clean_query, "format": "json", "limit": 1},
-        headers={"User-Agent": USER_AGENT},
-        timeout=15,
-    )
-    response.raise_for_status()
+        raise MapServiceError("Location value cannot be empty.")
+    try:
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": clean_query, "format": "json", "limit": 1},
+            headers={"User-Agent": USER_AGENT},
+            timeout=15,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise MapServiceError("Geocoding service unavailable.") from exc
     items = response.json()
     if not items:
-        raise ValueError(f"Could not geocode location: {clean_query}")
+        raise MapServiceError(f"Could not geocode location: {clean_query}")
     item = items[0]
     return {
         "label": item.get("display_name", clean_query),
@@ -31,17 +38,20 @@ def geocode_location(query: str) -> dict[str, Any]:
 
 def route_between_points(start: dict[str, Any], end: dict[str, Any]) -> dict[str, Any]:
     coordinates = f'{start["lon"]},{start["lat"]};{end["lon"]},{end["lat"]}'
-    response = requests.get(
-        f"https://router.project-osrm.org/route/v1/driving/{coordinates}",
-        params={"overview": "full", "geometries": "geojson", "steps": "true"},
-        headers={"User-Agent": USER_AGENT},
-        timeout=20,
-    )
-    response.raise_for_status()
+    try:
+        response = requests.get(
+            f"https://router.project-osrm.org/route/v1/driving/{coordinates}",
+            params={"overview": "full", "geometries": "geojson", "steps": "true"},
+            headers={"User-Agent": USER_AGENT},
+            timeout=20,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise MapServiceError("Routing service unavailable.") from exc
     payload = response.json()
     routes = payload.get("routes", [])
     if not routes:
-        raise ValueError("Unable to build route from map service")
+        raise MapServiceError("Unable to build route from map service.")
     route = routes[0]
     return {
         "distance_meters": route["distance"],
