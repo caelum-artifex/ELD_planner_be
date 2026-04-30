@@ -13,6 +13,12 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 # because this API is fully stateless and uses no database.
 INSTALLED_APPS = [
     "django.contrib.staticfiles",
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
     "corsheaders",
     "rest_framework",
     "planner",
