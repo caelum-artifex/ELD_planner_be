@@ -187,5 +187,3 @@ SECRET_KEY=<strong-random-key>
 DEBUG=False
 ALLOWED_HOSTS=yourdomain.com
 ```
-
-No database migrations are needed for the trip planner itself (trip data is fully stateless).
