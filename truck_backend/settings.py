@@ -3,76 +3,59 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ── Security ──────────────────────────────────────────────────────────────────
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-in-production")
+# ── Security ───────────────────────────────────────────────
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key")
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
-# ── Apps ──────────────────────────────────────────────────────────────────────
-# Only the minimum apps required — no admin, auth, sessions, or contenttypes
-# because this API is fully stateless and uses no database.
+# ── Apps (API ONLY) ────────────────────────────────────────
 INSTALLED_APPS = [
     "django.contrib.staticfiles",
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
     "corsheaders",
     "rest_framework",
     "planner",
 ]
 
-# ── Middleware ────────────────────────────────────────────────────────────────
+# ── Middleware (minimal for API) ───────────────────────────
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
-    "django.contrib.sessions.middleware.SessionMiddleware",
-
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "truck_backend.urls"
 
+# ── Templates (not really used, but required by Django) ───
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": []},
+        "OPTIONS": {
+            "context_processors": [],
+        },
     },
 ]
 
 WSGI_APPLICATION = "truck_backend.wsgi.application"
 
-# ── No database needed ────────────────────────────────────────────────────────
-# Trip planning is fully stateless — all computation happens in-memory.
-# No models, no migrations, no DB connection required.
+# ── No Database (stateless API) ───────────────────────────
+DATABASES = {}
 
-# ── Static files (served by WhiteNoise in production) ────────────────────────
-STATIC_URL = "static/"
+# ── Static Files (WhiteNoise) ─────────────────────────────
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ── CORS ─────────────────────────────────────────────────────────────────────
-# Allow all origins in dev. Set CORS_ALLOWED_ORIGINS env var in production
-# to restrict to your Vercel frontend URL.
-_cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
-if _cors_origins:
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",")]
+# ── CORS ─────────────────────────────────────────────────
+cors_origins = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+if cors_origins:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in cors_origins.split(",")]
 else:
     CORS_ALLOW_ALL_ORIGINS = True
 
-# ── Misc ──────────────────────────────────────────────────────────────────────
+# ── Misc ─────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = False
